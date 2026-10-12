@@ -1,6 +1,6 @@
 // Service Worker: hält die App vollständig offline verfügbar.
 // Bei Änderungen an Dateien VERSION erhöhen, damit Geräte die neue Fassung laden.
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = `us-staaten-${VERSION}`;
 const FILES = [
   './',
@@ -25,9 +25,10 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
+  // Nur eigene, veraltete Caches löschen – die andere App unter derselben Adresse hat ihre eigenen.
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('us-staaten-') && k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });

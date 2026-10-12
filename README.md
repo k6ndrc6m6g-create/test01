@@ -1,7 +1,29 @@
-# Die Staaten der USA
+# Geografie-Lern-Apps
 
-Eine Web-App (PWA) für das iPhone, mit der man die 50 US-Bundesstaaten spielerisch lernt.
-Sie lässt sich wie eine normale App auf den Home-Bildschirm legen und funktioniert danach auch offline.
+Zwei Web-Apps (PWA) für das iPhone, die sich wie normale Apps auf den Home-Bildschirm legen lassen und danach auch offline funktionieren:
+
+| App | Adresse | Farbschema |
+|---|---|---|
+| **Die Staaten der USA** | `https://<benutzername>.github.io/<repository>/` | Petrol auf warmem Off-White |
+| **Die Länder Europas** | `https://<benutzername>.github.io/<repository>/europa/` | dezentes Blau |
+
+## Die Länder Europas
+
+47 Länder (EU, Westbalkan, Skandinavien, Kleinstaaten, Ukraine, Belarus, Moldau, Russland und Türkei), deutsche Namen.
+Alle Spielmodi der USA-App gibt es auch hier (Auswahl, Eingabe, Karte finden, Hauptstädte, Gegen die Uhr, Erkunden). Dazu kommen:
+
+| Modus | Aufgabe |
+|---|---|
+| **Flagge erkennen** | Eine Flagge wird gezeigt – das Land aus vier Möglichkeiten wählen. Als falsche Antworten kommen bevorzugt ähnlich aussehende Flaggen (z. B. Rumänien/Moldau, Slowakei/Slowenien). |
+| **Flagge benennen** | Eine Flagge wird gezeigt – den Ländernamen eintippen. |
+
+Weitere Details:
+
+- **Eingabe:** Umlaute dürfen fehlen („Osterreich“, „Oesterreich“). Gängige Alternativen werden akzeptiert („Holland“, „Weißrussland“, „Großbritannien“).
+- **Kleinstaaten** wie Vatikanstadt, Monaco oder San Marino werden herangezoomt und mit einem Ring markiert.
+- **Lernstand:** Ländernamen, Flaggen und Hauptstädte werden getrennt erfasst.
+
+## Die Staaten der USA
 
 ## Spielmodi
 
@@ -35,18 +57,19 @@ Der Workflow `.github/workflows/pages.yml` veröffentlicht den Ordner `app/` bei
 Einmalig nötig: im Repository unter **Settings → Pages → Build and deployment → Source** den Eintrag **„GitHub Actions“** wählen.
 Die Adresse lautet dann `https://<benutzername>.github.io/<repository>/`.
 
-Hinweis: Nach Änderungen an den App-Dateien in `app/sw.js` die `VERSION` erhöhen, damit installierte Apps die neue Fassung laden.
+Hinweis: Nach Änderungen an den App-Dateien im jeweiligen `sw.js` die `VERSION` erhöhen, damit installierte Apps die neue Fassung laden.
 
 ## Entwicklung
 
-Die App ist reines HTML/CSS/JavaScript ohne Build-Schritt.
+Beide Apps sind reines HTML/CSS/JavaScript ohne Build-Schritt. Die USA-App liegt in `app/`, die Europa-App in `app/europa/` mit eigenen, unabhängigen Dateien.
 
 ```bash
 npm install          # nur für Kartengenerator und Tests nötig
 npm start            # lokaler Server auf http://localhost:8080
 npm test             # Logik-Tests (Antwortprüfung, Fragenauswahl, Kartendaten)
 npm run build:map    # app/js/data/map.js neu aus us-atlas erzeugen
-npm run build:icons  # App-Icons neu erzeugen (Python + Pillow)
+npm run build:europe # Europa-Karte aus world-atlas erzeugen und Flaggen kopieren
+npm run build:icons  # App-Icons beider Apps neu erzeugen (Python + Pillow)
 ```
 
 Aufbau:
@@ -62,8 +85,11 @@ app/
   js/storage.js      Lernstand & Einstellungen (localStorage)
   js/haptics.js      haptisches Feedback
   js/data/           Staaten-Stammdaten und erzeugte Kartengeometrie
-tools/               Generatoren für Karte und Icons
+  europa/            Europa-App (gleicher Aufbau, zusätzlich flags/ mit den Länderflaggen)
+tools/               Generatoren für Karten, Flaggen und Icons
 tests/               Node-Tests
 ```
 
-Kartendaten: [us-atlas](https://github.com/topojson/us-atlas) (U.S. Census Bureau, gemeinfrei).
+Kartendaten: [us-atlas](https://github.com/topojson/us-atlas) (U.S. Census Bureau, gemeinfrei) und
+[world-atlas](https://github.com/topojson/world-atlas) (Natural Earth, gemeinfrei).
+Flaggen: [flag-icons](https://github.com/lipis/flag-icons) (MIT-Lizenz, siehe `app/europa/flags/LICENSE`).
