@@ -191,7 +191,7 @@ function startGame(modeId, presetCodes = null) {
   if (mode.input === 'text') {
     input = h('input.text-input', {
       type: 'text', autocomplete: 'off', autocapitalize: 'words', autocorrect: 'off',
-      spellcheck: 'false', enterkeyhint: 'done', placeholder: 'Name des Staates', 'aria-label': 'Name des Staates',
+      spellcheck: 'false', enterkeyhint: 'go', placeholder: 'Name des Staates', 'aria-label': 'Name des Staates',
     });
     checkBtn = h('button.btn.primary', { type: 'submit' }, 'Prüfen');
     const skip = h('button.btn.ghost', { type: 'button', onclick: () => !locked && answerText(true) }, 'Weiß ich nicht');
@@ -203,6 +203,13 @@ function startGame(modeId, presetCodes = null) {
       },
     }, h('div.text-row', {}, input, checkBtn), skip);
     answers.append(form);
+
+    // iOS blendet die Tastatur aus, sobald ein Button angetippt wird oder das Feld schreibgeschützt ist,
+    // und zeigt sie nur nach einer Berührung wieder an. Darum bleibt das Feld immer bearbeitbar und
+    // fokussiert; Buttons übernehmen den Fokus nicht.
+    for (const b of [checkBtn, skip, nextBtn]) b.addEventListener('mousedown', (e) => e.preventDefault());
+    // Wer nach einer Antwort schon weitertippt, landet direkt in der nächsten Frage.
+    input.addEventListener('beforeinput', () => { if (locked) next(); });
   }
 
   const screen = h('main.screen.game' + (timed ? '.is-timed' : ''), {},
@@ -277,8 +284,8 @@ function startGame(modeId, presetCodes = null) {
     if (input) {
       input.value = '';
       input.classList.remove('is-right', 'is-wrong');
-      input.readOnly = false;
       checkBtn.disabled = false;
+      input.focus({ preventScroll: true });
     }
   }
 
@@ -324,7 +331,6 @@ function startGame(modeId, presetCodes = null) {
     const state = BY_CODE[current];
     const result = gaveUp ? 'wrong' : checkAnswer(input.value, current);
     const correct = result !== 'wrong';
-    input.readOnly = true;
     checkBtn.disabled = true;
     input.classList.add(correct ? 'is-right' : 'is-wrong');
     map.setState(current, correct ? 'is-right' : 'is-target');
