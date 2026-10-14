@@ -202,7 +202,10 @@ button { cursor: pointer; }
 /* ---------- Karte ---------- */
 .usmap-wrap { position: relative; }
 .usmap { display: block; width: 100%; height: auto; aspect-ratio: 1000 / 860; overflow: hidden; }
-.is-interactive .usmap { touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer; }
+/* Ein Finger scrollt die Seite, zwei Finger zoomen die Karte; ist sie gezoomt, verschiebt ein Finger den Ausschnitt. */
+.usmap { touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.is-zoomed .usmap, .is-interactive .usmap { touch-action: none; }
+.is-interactive .usmap { cursor: pointer; }
 
 .state {
   fill: var(--land);
