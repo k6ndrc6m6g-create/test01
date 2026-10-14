@@ -1,6 +1,6 @@
 // Service Worker: hält die App vollständig offline verfügbar.
 // Bei Änderungen an Dateien VERSION erhöhen, damit Geräte die neue Fassung laden.
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE = `us-staaten-${VERSION}`;
 const FILES = [
   './',

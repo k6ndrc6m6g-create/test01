@@ -37,18 +37,19 @@ export class EuropeMap {
     this.svg.appendChild(this.labelLayer);
 
     this.root = document.createElement('div');
+    // Jede Karte lässt sich mit zwei Fingern zoomen; antippen lassen sich die Gebiete nur, wenn onTap gesetzt ist.
     this.root.className = 'usmap-wrap' + (interactive ? ' is-interactive' : '');
     this.root.appendChild(this.svg);
 
-    if (interactive) {
-      this.resetButton = document.createElement('button');
-      this.resetButton.type = 'button';
-      this.resetButton.className = 'usmap-reset';
-      this.resetButton.textContent = 'Gesamtansicht';
-      this.resetButton.addEventListener('click', () => this.reset());
-      this.root.appendChild(this.resetButton);
-      this.bindGestures();
-    }
+    this.resetButton = document.createElement('button');
+    this.resetButton.type = 'button';
+    this.resetButton.className = 'usmap-reset';
+    this.resetButton.textContent = 'Gesamtansicht';
+    this.resetButton.addEventListener('click', () => this.reset());
+    // Fokus nicht vom Eingabefeld abziehen, sonst schließt iOS die Tastatur.
+    this.resetButton.addEventListener('mousedown', (e) => e.preventDefault());
+    this.root.appendChild(this.resetButton);
+    this.bindGestures();
     this.updateZoomState();
   }
 
@@ -179,13 +180,30 @@ export class EuropeMap {
     let pinch = null;
     const svg = this.svg;
 
-    svg.addEventListener('gesturestart', (e) => e.preventDefault());
+    // Safari meldet Pinch-Gesten zusätzlich als gesture*-Ereignisse. Sie verhindern das Zoomen der ganzen Seite
+    // und dienen als Rückfall, falls die Pointer-Ereignisse beim Pinch ausbleiben.
+    let gestureView = null;
+    svg.addEventListener('gesturestart', (e) => {
+      e.preventDefault();
+      cancelAnimationFrame(this.frame);
+      gestureView = { ...this.view };
+    });
+    svg.addEventListener('gesturechange', (e) => {
+      e.preventDefault();
+      if (pinch || !gestureView) return;
+      this.zoomAround(this.toSvgPoint(e.clientX, e.clientY), gestureView.w / e.scale);
+    });
+    svg.addEventListener('gestureend', (e) => {
+      e.preventDefault();
+      gestureView = null;
+    });
 
     svg.addEventListener('pointerdown', (e) => {
       svg.setPointerCapture(e.pointerId);
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY });
       if (pointers.size === 1) moved = false;
       if (pointers.size === 2) {
+        cancelAnimationFrame(this.frame);
         const [a, b] = [...pointers.values()];
         pinch = { dist: Math.hypot(a.x - b.x, a.y - b.y), view: { ...this.view } };
         moved = true;
@@ -206,13 +224,7 @@ export class EuropeMap {
         const [a, b] = [...pointers.values()];
         const dist = Math.hypot(a.x - b.x, a.y - b.y);
         const mid = this.toSvgPoint((a.x + b.x) / 2, (a.y + b.y) / 2);
-        const factor = pinch.dist / Math.max(dist, 1);
-        const w = pinch.view.w * factor;
-        const h = w / ASPECT;
-        // Um den Mittelpunkt der beiden Finger zoomen.
-        const rx = (mid.x - this.view.x) / this.view.w;
-        const ry = (mid.y - this.view.y) / this.view.h;
-        this.setView(this.clampView({ x: mid.x - rx * w, y: mid.y - ry * h, w, h }));
+        this.zoomAround(mid, pinch.view.w * (pinch.dist / Math.max(dist, 1)));
       } else if (pointers.size === 1 && moved && this.view.w < FULL.w - 1) {
         const v = this.view;
         this.setView(this.clampView({ x: v.x - dx * k, y: v.y - dy * k, w: v.w, h: v.h }));
@@ -235,17 +247,22 @@ export class EuropeMap {
     svg.addEventListener('pointerup', end);
     svg.addEventListener('pointercancel', end);
 
+    // Mausrad zoomt nur auf antippbaren Karten (sonst würde es das Scrollen der Seite kapern);
+    // Trackpad-Pinch (mit ctrlKey) zoomt überall.
     svg.addEventListener('wheel', (e) => {
+      if (!this.interactive && !e.ctrlKey) return;
       e.preventDefault();
-      const pt = this.toSvgPoint(e.clientX, e.clientY);
-      const factor = Math.exp(e.deltaY * 0.002);
-      const v = this.view;
-      const w = v.w * factor;
-      const h = w / ASPECT;
-      const rx = (pt.x - v.x) / v.w;
-      const ry = (pt.y - v.y) / v.h;
-      this.setView(this.clampView({ x: pt.x - rx * w, y: pt.y - ry * h, w, h }));
+      this.zoomAround(this.toSvgPoint(e.clientX, e.clientY), this.view.w * Math.exp(e.deltaY * 0.002));
     }, { passive: false });
+  }
+
+  // Auf Breite w zoomen, wobei der Kartenpunkt pt an derselben Stelle auf dem Bildschirm bleibt.
+  zoomAround(pt, w) {
+    const v = this.view;
+    const h = w / ASPECT;
+    const rx = (pt.x - v.x) / v.w;
+    const ry = (pt.y - v.y) / v.h;
+    this.setView(this.clampView({ x: pt.x - rx * w, y: pt.y - ry * h, w, h }));
   }
 
   // Treffer direkt auf einem Land – sonst unter den Ländern im Umkreis von ~14 px das mit dem nächsten Mittelpunkt
