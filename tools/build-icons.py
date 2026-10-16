@@ -3,6 +3,7 @@
 Aufruf: python3 tools/build-icons.py   (benötigt Pillow)
 USA:    Silhouette der 48 zusammenhängenden Staaten in Petrol auf warmem Off-White.
 Europa: Silhouette Europas (ohne die nur angeschnittenen Länder) in dezentem Blau auf kühlem Off-White.
+München: Stadtgebiet in Tannengrün auf hellem, leicht grünem Grund.
 """
 import json
 import re
@@ -16,6 +17,8 @@ APPS = [
      "bg": (246, 244, 239), "ink": (46, 107, 102), "coverage": (0.62, 0.66)},
     {"map": "app/europa/js/data/map.js", "out": "app/europa/icons", "skip": ("ru", "tr", "is", "cy"),
      "bg": (243, 245, 248), "ink": (61, 95, 135), "coverage": (0.58, 0.62)},
+    {"map": "app/muenchen/js/data/map.js", "out": "app/muenchen/icons", "skip": (),
+     "bg": (243, 245, 242), "ink": (31, 77, 58), "coverage": (0.66, 0.7)},
 ]
 SCALE = 4  # Supersampling für glatte Kanten
 
